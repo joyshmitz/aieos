@@ -1,9 +1,9 @@
 # AIEOS (AI Entity Object Specification)
 
-Open-source identity, messaging, and settlement standard for the Agentic Web.
+> **Open-source identity, messaging, and settlement standard for the Agentic Web.**
 
 <p align="left">
-<a href="https://entitai.com"><img src="entitai-web-builder.svg" alt="Web Builder" style="margin-right: 10px;" /></a>
+<a href="https://entitai.com"><img src="entitai-web-builder.svg" alt="Web Builder" style="margin-right: 20px;" /></a>
 <a href="https://aieos.org"><img src="aieos-agent-gateway.svg" alt="Agent Gateway" /></a>
 </p>
 
