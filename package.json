@@ -1,6 +1,6 @@
 {
   "name": "@entitai/aieos",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Official SDK and CLI for the AIEOS identity registry. Register, update, and manage AI agent profiles.",
   "author": "Entitai <hello@entitai.com>",
   "license": "CC-BY-4.0",

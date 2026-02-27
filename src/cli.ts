@@ -199,9 +199,10 @@ async function cmdRegister(): Promise<void> {
   spin.stop('Profile signed.');
 
   // ── If alias requested, preview price ────────────────────────────────────
+  let paymentInfo: PaymentInfo | null = null;
   if (alias) {
-    const price = await previewAliasPrice(client, alias);
-    if (price) {
+    paymentInfo = await previewAliasPrice(client, alias);
+    if (paymentInfo) {
       const confirmPay = await p.confirm({
         message: `Process @${alias} registration fee on Base?`,
       });
@@ -213,12 +214,27 @@ async function cmdRegister(): Promise<void> {
     }
   }
 
-  // ── If alias, collect tx_id ──────────────────────────────────────────────
+  // ── If alias, show payment instructions then collect tx_id ───────────────
   let txId: string | undefined;
-  if (alias) {
+  if (alias && paymentInfo) {
+    const chainLabel = paymentInfo.chain === 'base' ? 'Base mainnet' : paymentInfo.chain;
+    p.note(
+      `Amount   : ${paymentInfo.amount} ${paymentInfo.currency}\n` +
+      `Chain    : ${chainLabel}\n` +
+      (paymentInfo.wallet_address
+        ? `Contract : ${paymentInfo.wallet_address}\n`
+        : '') +
+      `\n` +
+      (paymentInfo.instructions
+        ? paymentInfo.instructions.replace(/\. (\d+\.)/g, '.\n$1') + '\n\n'
+        : '') +
+      `After paying, paste the transaction hash below.`,
+      'Payment instructions',
+    );
+
     const txRaw = await p.text({
-      message: 'Paste your USDC payment tx ID (0x…)',
-      validate: (v) => (v.trim().length < 5 ? 'Enter a valid transaction ID.' : undefined),
+      message: 'Transaction hash (0x…)',
+      validate: (v) => (v.trim().length < 5 ? 'Enter a valid transaction hash.' : undefined),
     });
     if (p.isCancel(txRaw)) return cancelled();
     txId = (txRaw as string).trim();
@@ -461,7 +477,15 @@ function printApiError(err: unknown): void {
   }
 }
 
-async function previewAliasPrice(client: AieosClient, alias: string): Promise<string | null> {
+interface PaymentInfo {
+  amount: string;
+  currency: string;
+  chain: string;
+  wallet_address?: string;
+  instructions?: string;
+}
+
+async function previewAliasPrice(client: AieosClient, alias: string): Promise<PaymentInfo | null> {
   try {
     await client.register({
       standard: { protocol: 'AIEOS', version: SCHEMA_VERSION },
@@ -470,7 +494,13 @@ async function previewAliasPrice(client: AieosClient, alias: string): Promise<st
     });
   } catch (err) {
     if (err instanceof AieosApiError && err.status === 402 && err.body.amount) {
-      return err.body.amount;
+      return {
+        amount:         err.body.amount as string,
+        currency:       (err.body.currency as string | undefined) ?? 'USDC',
+        chain:          (err.body.chain as string | undefined) ?? 'Base',
+        wallet_address: err.body.contract_address ?? err.body.wallet_address,
+        instructions:   err.body.instructions,
+      };
     }
   }
   return null;

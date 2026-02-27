@@ -34,7 +34,8 @@ export interface ApiError {
   // Payment required fields
   alias?: string;
   amount?: string;
-  wallet_address?: string;
+  wallet_address?: string;   // legacy
+  contract_address?: string; // current
   currency?: string;
   chain?: string;
   instructions?: string;
