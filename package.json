@@ -1,13 +1,13 @@
 {
   "name": "@entitai/aieos",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Official SDK and CLI for the AIEOS identity registry. Register, update, and manage AI agent profiles.",
   "author": "Entitai <hello@entitai.com>",
   "license": "CC-BY-4.0",
   "homepage": "https://aieos.org",
   "repository": {
     "type": "git",
-    "url": "https://github.com/entitai/aieos.git"
+    "url": "git+https://github.com/entitai/aieos.git"
   },
   "bugs": {
     "url": "https://github.com/entitai/aieos/issues"
