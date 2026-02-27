@@ -108,6 +108,43 @@ async function cmdRegister(): Promise<void> {
     });
     if (p.isCancel(aliasRaw)) return cancelled();
     alias = (aliasRaw as string).trim();
+
+    // Check availability before proceeding
+    const checkSpin = p.spinner();
+    checkSpin.start(`Checking availability of @${alias}…`);
+    try {
+      await client.lookup(alias);
+      // 200 means it exists — taken
+      checkSpin.stop(`@${alias} is already taken.`);
+      alias = undefined;
+    } catch (err) {
+      if (err instanceof AieosApiError && err.status === 404) {
+        checkSpin.stop(`@${alias} is available.`);
+      } else {
+        checkSpin.stop('Could not check availability — continuing anyway.');
+      }
+    }
+
+    if (!alias) {
+      const retry = await p.confirm({ message: 'Try a different alias?' });
+      if (p.isCancel(retry) || !retry) {
+        alias = undefined;
+      } else {
+        // Loop back — re-ask for alias
+        const aliasRetry = await p.text({
+          message: 'Desired alias  (letters, numbers, underscore — max 32 chars)',
+          placeholder: 'myalias',
+          validate: (v) => {
+            const t = v.trim();
+            if (t.length < 1 || t.length > 32) return 'Must be 1–32 characters.';
+            if (!/^[a-zA-Z0-9_]+$/.test(t)) return 'Letters, numbers, and underscore only.';
+            return undefined;
+          },
+        });
+        if (p.isCancel(aliasRetry)) return cancelled();
+        alias = (aliasRetry as string).trim();
+      }
+    }
   }
 
   // ── Contact email (optional, private) ─────────────────────────────────────
