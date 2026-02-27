@@ -15,6 +15,9 @@ import { resolve } from 'node:path';
 import { generateKeypair, signProfile, verifyProfile } from './crypto.js';
 import { AieosClient, AieosApiError } from './client.js';
 import type { RegisterPayload, UpdatePayload } from './client.js';
+import { getBalances, sendUsdc, normalisePrivateKey, isSupportedChain, CHAIN_CONFIG } from './evm.js';
+import type { SupportedChain } from './evm.js';
+import { parseUnits } from 'viem';
 
 const VERSION = '1.2.0';
 const SCHEMA_VERSION = '1.2';
@@ -201,43 +204,101 @@ async function cmdRegister(): Promise<void> {
   // ── If alias requested, preview price ────────────────────────────────────
   let paymentInfo: PaymentInfo | null = null;
   if (alias) {
+    const priceSpin = p.spinner();
+    priceSpin.start('Fetching alias price…');
     paymentInfo = await previewAliasPrice(client, alias);
+    priceSpin.stop(paymentInfo ? `@${alias} costs ${paymentInfo.amount} ${paymentInfo.currency}.` : 'Could not fetch price.');
+
     if (paymentInfo) {
       const confirmPay = await p.confirm({
         message: `Process @${alias} registration fee on Base?`,
       });
       if (p.isCancel(confirmPay) || !confirmPay) {
-        p.cancel('Alias skipped. You can claim one later with aieos claim-alias.');
+        p.log.warn('Alias skipped. You can claim one later.');
         alias = undefined;
         delete profile.metadata.alias;
       }
     }
   }
 
-  // ── If alias, show payment instructions then collect tx_id ───────────────
-  let txId: string | undefined;
+  // ── If alias confirmed, run the full automated payment ───────────────────
+  let txId:  string | undefined;
+  let txUri: string | undefined;
+
   if (alias && paymentInfo) {
-    const chainLabel = paymentInfo.chain === 'base' ? 'Base mainnet' : paymentInfo.chain;
+    const chain = (paymentInfo.chain && isSupportedChain(paymentInfo.chain)
+      ? paymentInfo.chain
+      : 'base') as SupportedChain;
+    const chainCfg   = CHAIN_CONFIG[chain];
+    const toAddress  = paymentInfo.wallet_address as `0x${string}`;
+    const amountStr  = paymentInfo.amount;
+    const amountRaw  = parseUnits(amountStr, 6);
+
     p.note(
-      `Amount   : ${paymentInfo.amount} ${paymentInfo.currency}\n` +
-      `Chain    : ${chainLabel}\n` +
-      (paymentInfo.wallet_address
-        ? `Contract : ${paymentInfo.wallet_address}\n`
-        : '') +
-      `\n` +
-      (paymentInfo.instructions
-        ? paymentInfo.instructions.replace(/\. (\d+\.)/g, '.\n$1') + '\n\n'
-        : '') +
-      `After paying, paste the transaction hash below.`,
-      'Payment instructions',
+      `Amount  : ${amountStr} ${paymentInfo.currency}\n` +
+      `Network : ${chainCfg.label}\n` +
+      `To      : ${toAddress}\n` +
+      (chainCfg.faucetUsdc
+        ? `\nNeed testnet USDC? ${chainCfg.faucetUsdc}`
+        : ''),
+      'Payment details',
     );
 
-    const txRaw = await p.text({
-      message: 'Transaction hash (0x…)',
-      validate: (v) => (v.trim().length < 5 ? 'Enter a valid transaction hash.' : undefined),
+    // Ask for EVM private key — used only to sign the tx, never stored
+    p.log.warn('Your EVM private key is used only to send this payment and is never stored.');
+
+    const evmKeyRaw = await p.text({
+      message: 'EVM wallet private key (hex, 64 chars — separate from your AIEOS key)',
+      placeholder: 'a1b2c3… or 0xa1b2c3…',
+      validate: (v) => {
+        if (!normalisePrivateKey(v.trim())) return 'Must be a 64-character hex string (with or without 0x prefix).';
+        return undefined;
+      },
     });
-    if (p.isCancel(txRaw)) return cancelled();
-    txId = (txRaw as string).trim();
+    if (p.isCancel(evmKeyRaw)) return cancelled();
+    const evmKey = normalisePrivateKey((evmKeyRaw as string).trim())!;
+
+    // Derive wallet address and check balances
+    const { privateKeyToAccount } = await import('viem/accounts');
+    const account = privateKeyToAccount(`0x${evmKey}` as `0x${string}`);
+
+    const balSpin = p.spinner();
+    balSpin.start(`Checking wallet ${account.address}…`);
+    let balances;
+    try {
+      balances = await getBalances(account.address, chain);
+    } catch {
+      balSpin.stop('Could not fetch balances — check your network connection.');
+      return cancelled();
+    }
+    balSpin.stop(
+      `Balance: ${balances.usdc} USDC  |  ${parseFloat(balances.eth).toFixed(6)} ETH`,
+    );
+
+    if (balances.usdcRaw < amountRaw) {
+      p.log.error(
+        `Insufficient USDC. You have ${balances.usdc} USDC but need ${amountStr} USDC.` +
+        (chainCfg.faucetUsdc ? `\nGet testnet USDC: ${chainCfg.faucetUsdc}` : ''),
+      );
+      return cancelled();
+    }
+
+    // Send the USDC transfer
+    const paySpin = p.spinner();
+    paySpin.start(`Sending ${amountStr} USDC on ${chainCfg.label}…`);
+    let payResult;
+    try {
+      payResult = await sendUsdc(evmKey, toAddress, amountStr, chain);
+    } catch (err) {
+      paySpin.stop('Payment failed.');
+      p.log.error(err instanceof Error ? err.message : String(err));
+      return cancelled();
+    }
+    paySpin.stop(`Payment confirmed.`);
+    p.log.info(`Transaction: ${payResult.explorerUrl}`);
+
+    txId  = payResult.txHash;
+    txUri = payResult.explorerUrl;
   }
 
   // ── Register ────────────────────────────────────────────────────────────────
@@ -245,8 +306,9 @@ async function cmdRegister(): Promise<void> {
   try {
     const payload: RegisterPayload = {
       ...profile,
-      ...(email && { email }),
-      ...(txId  && { tx_id: txId }),
+      ...(email  && { email }),
+      ...(txId   && { tx_id:  txId }),
+      ...(txUri  && { tx_uri: txUri }),
     };
     const result = await client.register(payload);
     spin.stop('Registered!');
