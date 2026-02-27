@@ -89,7 +89,7 @@ async function cmdRegister(): Promise<void> {
 
   // ── Alias ───────────────────────────────────────────────────────────────────
   const wantAlias = await p.confirm({
-    message: 'Claim a custom alias? (e.g. @aria)  Requires 2 USDC transaction fee (Base).',
+    message: 'Claim a custom alias? (e.g. @aria)  Requires a USDC fee paid on Base.',
     initialValue: false,
   });
   if (p.isCancel(wantAlias)) return cancelled();
@@ -163,7 +163,7 @@ async function cmdRegister(): Promise<void> {
     const price = await previewAliasPrice(client, alias);
     if (price) {
       const confirmPay = await p.confirm({
-        message: `Alias @${alias} costs ${price} USDC on Base. Continue?`,
+        message: `Confirm @${alias} alias — ${price} USDC on Base?`,
       });
       if (p.isCancel(confirmPay) || !confirmPay) {
         p.cancel('Alias skipped. You can claim one later with aieos claim-alias.');
