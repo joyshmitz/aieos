@@ -1,6 +1,6 @@
-# @entitai/aieos
+# AIEOS (AI Entity Object Specification)
 
-> Official SDK and CLI for the AIEOS identity registry — register, update, and manage AI agent profiles.
+> Open-source identity, messaging, and settlement standard for the Agentic Web.
 
 <p align="left">
 <a href="https://entitai.com"><img src="entitai-web-builder.svg" alt="Web Builder" style="margin-right: 20px;" /></a>
@@ -10,29 +10,53 @@
 [![npm version](https://img.shields.io/npm/v/@entitai/aieos)](https://www.npmjs.com/package/@entitai/aieos)
 [![license](https://img.shields.io/npm/l/@entitai/aieos)](LICENSE)
 
-## Quickstart
+## Meet AIEOS v1.2
 
-Register your AI agent in 60 seconds:
+AIEOS is an open standard that defines a portable identity structure for AI agents, independent of any underlying model. The specification externalizes an agent's capabilities, communication endpoints, and settlement credentials into a single machine-readable object. Discoverable, readable, and transactable by any agent, anywhere.
 
-```sh
-npx @entitai/aieos register
-```
+AIEOS enables a fully autonomous agent-to-agent workflow. Agents discover each other through published identity objects, evaluate capabilities and skill priorities, and establish direct communication channels without requiring a shared platform or human mediation.
 
-The interactive wizard will:
-1. Ask for your agent's name and type
-2. Generate an Ed25519 keypair (stays on your machine)
-3. Sign and submit your identity to the AIEOS registry
-4. Save your keypair to a local JSON file
+Typical sequence: Agent A queries Agent B's identity, reads its available skills, initiates a task delegation, and upon completion, settles payment. The entire cycle is handled at the schema level by default.
+
+## Core Structure
+
+- **Metadata:** Unique entity identification via UUID v4, human-readable Alias, and Ed25519 key pair for cryptographic signing and verification.
+- **Presence:** Network endpoints (IPv4/IPv6, webhooks), communication channels, and settlement wallets for autonomous value transfer.
+- **Capabilities & Skills:** A modular agency layer for defining the standardized tools and executable functions available to an entity, utilizing a descending priority scale (1-10) for autonomous skill discovery and task orchestration.
+
+## Human Interactions
+
+- **Identity & Physicality:** Beyond basic bio data; defines the perceived physical presence, from somatotype to distinguishing facial features and aesthetic archetypes.
+- **Psychology & Neural Matrix:** A multi-layered cognitive framework featuring a normalized Neural Matrix (0.0 - 1.0) for core drivers, alongside OCEAN traits and moral alignment.
+- **Linguistics & Idiolect:** Fine-grained control over vocal acoustics, syntax, and verbal tics, allowing for consistent "voice" across both TTS and text-based interaction.
+- **History & Motivations:** Structural mapping of origin stories, life events, and professional background to drive an agent's long-term goals and behavioral consistency.
+- **Interests:** Preferences, hobbies, and lifestyle parameters for contextual behavior and personalization.
 
 ---
 
-## Install
+## Quickstart
+
+Install the package and register your AI agent in 60 seconds:
 
 ```sh
 npm install @entitai/aieos
 # or
 bun add @entitai/aieos
 ```
+
+Then run the interactive wizard:
+
+```sh
+npx @entitai/aieos register
+```
+
+The wizard will:
+1. Ask for your agent's name and type
+2. Generate an Ed25519 keypair (stays on your machine)
+3. Sign and submit your identity to the AIEOS registry
+4. Save your keypair to a local JSON file
+
+---
 
 ## CLI Commands
 
@@ -47,7 +71,7 @@ npx @entitai/aieos keygen                # Generate a new Ed25519 keypair (print
 If installed globally (`npm i -g @entitai/aieos`):
 ```sh
 aieos register
-aieos lookup stella
+aieos lookup id
 ```
 
 ### Environment
@@ -81,7 +105,7 @@ const result = await client.register(profile);
 // { entity_id: '...', message: 'Agent registered successfully' }
 
 // Lookup
-const agentProfile = await client.lookup('stella');
+const agentProfile = await client.lookup('id');
 
 // Verify signature
 const valid = verifyProfile(agentProfile);
@@ -95,37 +119,16 @@ const { generateKeypair, AieosClient } = require('@entitai/aieos');
 
 ---
 
-## AIEOS Schema v1.2
+## Schema
 
-The full identity schema is at:
+To use the v1.2 schema in your project, reference the remote URI:
 `https://aieos.org/schema/v1.2/aieos.schema.json`
 
-Core structure:
-- **metadata** — `entity_id`, `public_key`, `signature`, `alias` (if claimed)
-- **identity** — `names`, `agent_type`, `description`
-- **presence** — `access` (email, website, social links), `settlement.wallets`
-- **capabilities** — skills available for agent-to-agent discovery
-- **endpoints** — API endpoints for direct communication
-
 ---
 
-## Security Model
+## Contributing
 
-- Ed25519 keypairs are generated locally and **never transmitted**
-- Your private key stays on your machine (saved in the output JSON file)
-- The profile is signed before submission — the AIEOS registry verifies the signature
-- Backups: keep your keypair JSON safe; it is required to update your profile
-
----
-
-## About AIEOS
-
-AIEOS (AI Entity Object Specification) is an open standard for portable AI agent identity, independent of any specific model or platform. Agents can discover each other, evaluate capabilities, and settle payments autonomously using their published AIEOS profiles.
-
-- Website: [aieos.org](https://aieos.org)
-- Registry API: [api.aieos.org](https://api.aieos.org)
-- npm: [npmjs.com/package/@entitai/aieos](https://www.npmjs.com/package/@entitai/aieos)
-- Issues: [github.com/entitai/aieos/issues](https://github.com/entitai/aieos/issues)
+AIEOS is an open standard. We welcome PRs for new identity primitives, protocol extensions, or architectural improvements.
 
 ---
 
