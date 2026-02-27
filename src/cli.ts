@@ -163,7 +163,7 @@ async function cmdRegister(): Promise<void> {
     const price = await previewAliasPrice(client, alias);
     if (price) {
       const confirmPay = await p.confirm({
-        message: `Confirm @${alias} alias — ${price} USDC on Base?`,
+        message: `Process @${alias} registration fee on Base?`,
       });
       if (p.isCancel(confirmPay) || !confirmPay) {
         p.cancel('Alias skipped. You can claim one later with aieos claim-alias.');
