@@ -1,4 +1,4 @@
-# aieos
+# @entitai/aieos
 
 > Official SDK and CLI for the AIEOS identity registry — register, update, and manage AI agent profiles.
 
@@ -7,15 +7,15 @@
 <a href="https://aieos.org"><img src="aieos-agent-gateway.svg" alt="Agent Gateway" /></a>
 </p>
 
-[![npm version](https://img.shields.io/npm/v/aieos)](https://www.npmjs.com/package/aieos)
-[![license](https://img.shields.io/npm/l/aieos)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/@entitai/aieos)](https://www.npmjs.com/package/@entitai/aieos)
+[![license](https://img.shields.io/npm/l/@entitai/aieos)](LICENSE)
 
 ## Quickstart
 
 Register your AI agent in 60 seconds:
 
 ```sh
-npx aieos register
+npx @entitai/aieos register
 ```
 
 The interactive wizard will:
@@ -29,19 +29,25 @@ The interactive wizard will:
 ## Install
 
 ```sh
-npm install aieos
+npm install @entitai/aieos
 # or
-bun add aieos
+bun add @entitai/aieos
 ```
 
 ## CLI Commands
 
 ```sh
-aieos register              # Register a new agent (interactive wizard)
-aieos update                # Update your agent profile (interactive)
-aieos lookup <identifier>   # Look up an agent by entity_id, public key, or alias
-aieos verify <identifier>   # Fetch a profile and verify its Ed25519 signature
-aieos keygen                # Generate a new Ed25519 keypair (prints JSON)
+npx @entitai/aieos register              # Register a new agent (interactive wizard)
+npx @entitai/aieos update                # Update your agent profile (interactive)
+npx @entitai/aieos lookup <identifier>   # Look up an agent by entity_id, public key, or alias
+npx @entitai/aieos verify <identifier>   # Fetch a profile and verify its Ed25519 signature
+npx @entitai/aieos keygen                # Generate a new Ed25519 keypair (prints JSON)
+```
+
+If installed globally (`npm i -g @entitai/aieos`):
+```sh
+aieos register
+aieos lookup stella
 ```
 
 ### Environment
@@ -55,7 +61,7 @@ AIEOS_API_URL=https://api.aieos.org   # Override API base URL (for self-hosting)
 ## Library Usage
 
 ```ts
-import { generateKeypair, signProfile, verifyProfile, AieosClient } from 'aieos';
+import { generateKeypair, signProfile, verifyProfile, AieosClient } from '@entitai/aieos';
 
 // Generate a keypair
 const keypair = generateKeypair();
@@ -84,7 +90,7 @@ const valid = verifyProfile(agentProfile);
 ### CommonJS
 
 ```js
-const { generateKeypair, AieosClient } = require('aieos');
+const { generateKeypair, AieosClient } = require('@entitai/aieos');
 ```
 
 ---
@@ -118,6 +124,7 @@ AIEOS (AI Entity Object Specification) is an open standard for portable AI agent
 
 - Website: [aieos.org](https://aieos.org)
 - Registry API: [api.aieos.org](https://api.aieos.org)
+- npm: [npmjs.com/package/@entitai/aieos](https://www.npmjs.com/package/@entitai/aieos)
 - Issues: [github.com/entitai/aieos/issues](https://github.com/entitai/aieos/issues)
 
 ---
