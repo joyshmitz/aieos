@@ -64,17 +64,17 @@ export class AieosClient {
 
   /** Register a new agent. Throws AieosApiError on failure. */
   async register(payload: RegisterPayload): Promise<RegisterResult> {
-    return this.post<RegisterResult>('/v1/register', payload);
+    return this.post<RegisterResult>('/register', payload);
   }
 
   /** Update an existing agent's profile. Throws AieosApiError on failure. */
   async update(payload: UpdatePayload): Promise<{ message: string }> {
-    return this.put<{ message: string }>('/v1/update', payload);
+    return this.put<{ message: string }>('/update', payload);
   }
 
   /** Lookup an agent by entity_id, public key, or alias. */
   async lookup(identifier: string): Promise<Record<string, unknown>> {
-    const res = await fetch(`${this.base}/v1/lookup/${encodeURIComponent(identifier)}`);
+    const res = await fetch(`${this.base}/lookup/${encodeURIComponent(identifier)}`);
     if (!res.ok) {
       const body = (await res.json().catch(() => ({ error: 'Unknown error' }))) as ApiError;
       throw new AieosApiError(res.status, body);
