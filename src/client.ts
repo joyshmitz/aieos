@@ -74,7 +74,7 @@ export class AieosClient {
 
   /** Lookup an agent by entity_id, public key, or alias. */
   async lookup(identifier: string): Promise<Record<string, unknown>> {
-    const res = await fetch(`${this.base}/lookup/${encodeURIComponent(identifier)}`);
+    const res = await fetch(`${this.base}/id/${encodeURIComponent(identifier)}`);
     if (!res.ok) {
       const body = (await res.json().catch(() => ({ error: 'Unknown error' }))) as ApiError;
       throw new AieosApiError(res.status, body);
@@ -84,7 +84,7 @@ export class AieosClient {
 
   /** Check if an alias is available to claim. Returns true if available. */
   async checkAvailable(alias: string): Promise<boolean> {
-    const res = await fetch(`${this.base}/lookup/${encodeURIComponent(alias)}`, { method: 'HEAD' });
+    const res = await fetch(`${this.base}/id/${encodeURIComponent(alias)}`, { method: 'HEAD' });
     if (res.status === 429) throw new AieosApiError(429, { error: 'Rate limited. Please wait a minute before checking again.' });
     if (res.status === 404) return true;
     if (!res.ok) throw new AieosApiError(res.status, { error: 'Could not check availability.' });
