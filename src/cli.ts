@@ -89,7 +89,7 @@ async function cmdRegister(): Promise<void> {
 
   // ── Alias ───────────────────────────────────────────────────────────────────
   const wantAlias = await p.confirm({
-    message: 'Claim a custom alias? (e.g. @aria)  Requires a USDC fee paid on Base.',
+    message: 'Claim a custom alias? (e.g. @aria) Requires 2.00 USDC transaction fee on Base.',
     initialValue: false,
   });
   if (p.isCancel(wantAlias)) return cancelled();
