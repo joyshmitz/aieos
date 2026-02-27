@@ -113,16 +113,19 @@ async function cmdRegister(): Promise<void> {
     const checkSpin = p.spinner();
     checkSpin.start(`Checking availability of @${alias}…`);
     try {
-      await client.lookup(alias);
-      // 200 means it exists — taken
-      checkSpin.stop(`@${alias} is already taken.`);
-      alias = undefined;
-    } catch (err) {
-      if (err instanceof AieosApiError && err.status === 404) {
+      const available = await client.checkAvailable(alias);
+      if (available) {
         checkSpin.stop(`@${alias} is available.`);
       } else {
-        checkSpin.stop('Could not check availability — continuing anyway.');
+        checkSpin.stop(`@${alias} is already taken.`);
+        alias = undefined;
       }
+    } catch (err) {
+      if (err instanceof AieosApiError && err.status === 429) {
+        checkSpin.stop('Rate limited — please wait a minute and try again.');
+        return cancelled();
+      }
+      checkSpin.stop('Could not check availability — continuing anyway.');
     }
 
     if (!alias) {

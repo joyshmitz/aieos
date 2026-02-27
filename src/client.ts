@@ -82,6 +82,15 @@ export class AieosClient {
     return res.json() as Promise<Record<string, unknown>>;
   }
 
+  /** Check if an alias is available to claim. */
+  async checkAvailable(alias: string): Promise<boolean> {
+    const res = await fetch(`${this.base}/available/${encodeURIComponent(alias)}`);
+    if (res.status === 429) throw new AieosApiError(429, { error: 'Rate limited. Please wait a minute before checking again.' });
+    if (!res.ok) throw new AieosApiError(res.status, { error: 'Could not check availability.' });
+    const body = (await res.json()) as { available: boolean };
+    return body.available;
+  }
+
   private async post<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${this.base}${path}`, {
       method: 'POST',
