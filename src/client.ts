@@ -3,10 +3,17 @@
  * All methods call the public HTTPS endpoints — zero internal server code.
  */
 
+export interface AgentNames {
+  first?: string;
+  middle?: string;
+  last?: string;
+  nickname?: string;
+}
+
 export interface RegisterPayload {
   standard: { protocol: string; version: string; schema_url?: string };
   metadata: { public_key: string; signature: string; alias?: string };
-  identity: { names: string[]; [key: string]: unknown };
+  identity: { names: AgentNames; [key: string]: unknown };
   capabilities?: Record<string, unknown>;
   endpoints?: Record<string, unknown>;
   tx_id?: string;
@@ -23,7 +30,7 @@ export interface RegisterResult {
 export interface UpdatePayload {
   standard: { protocol: string; version: string; schema_url?: string };
   metadata: { public_key: string; signature: string; [key: string]: unknown };
-  identity: { names: string[]; [key: string]: unknown };
+  identity: { names: AgentNames; [key: string]: unknown };
   capabilities?: Record<string, unknown>;
   endpoints?: Record<string, unknown>;
 }

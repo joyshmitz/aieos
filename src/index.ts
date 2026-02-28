@@ -14,5 +14,6 @@ export type {
   RegisterPayload,
   RegisterResult,
   UpdatePayload,
+  AgentNames,
   ApiError,
 } from './client.js';
