@@ -173,6 +173,10 @@ async function cmdRegister(): Promise<void> {
   spin.start('Generating Ed25519 keypair…');
   const keypair = generateKeypair();
   spin.stop('Keypair generated.');
+  p.note(
+    `Public key  : ${keypair.publicKey}\nPrivate key : ${keypair.privateKey}`,
+    'Your keypair — copy these now',
+  );
 
   // ── Build profile ───────────────────────────────────────────────────────────
   const metadata: RegisterPayload['metadata'] = {
@@ -315,7 +319,7 @@ async function cmdRegister(): Promise<void> {
     const result = await client.register(payload);
     spin.stop('Registered!');
 
-    const outFile = resolve(`./${agentName.replace(/\s+/g, '-').toLowerCase()}-aieos.json`);
+    const outFile = resolve(`./${result.entity_id}.json`);
     const saved = {
       entity_id:   result.entity_id,
       alias:       result.alias,
