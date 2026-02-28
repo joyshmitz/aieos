@@ -22,6 +22,8 @@ import { parseUnits } from 'viem';
 const VERSION = '1.2.0';
 const SCHEMA_VERSION = '1.2';
 const DEFAULT_BASE_URL = 'https://api.aieos.org';
+const MIN_ALIAS_LENGTH = 4;
+const MAX_ALIAS_LENGTH = 32;
 
 const cmd = process.argv[2];
 
@@ -100,11 +102,11 @@ async function cmdRegister(): Promise<void> {
   let alias: string | undefined;
   if (wantAlias) {
     const aliasRaw = await p.text({
-      message: 'Desired alias  (letters, numbers, underscore — max 32 chars)',
+      message: `Desired alias  (letters, numbers, underscore — ${MIN_ALIAS_LENGTH}–${MAX_ALIAS_LENGTH} chars)`,
       placeholder: 'aria',
       validate: (v) => {
         const t = v.trim();
-        if (t.length < 1 || t.length > 32) return 'Must be 1–32 characters.';
+        if (t.length < MIN_ALIAS_LENGTH || t.length > MAX_ALIAS_LENGTH) return `Must be ${MIN_ALIAS_LENGTH}–${MAX_ALIAS_LENGTH} characters.`;
         if (!/^[a-zA-Z0-9_]+$/.test(t)) return 'Letters, numbers, and underscore only.';
         return undefined;
       },
@@ -138,7 +140,7 @@ async function cmdRegister(): Promise<void> {
       } else {
         // Loop back — re-ask for alias
         const aliasRetry = await p.text({
-          message: 'Desired alias  (letters, numbers, underscore — max 32 chars)',
+          message: `Desired alias  (letters, numbers, underscore — ${MIN_ALIAS_LENGTH}–${MAX_ALIAS_LENGTH} chars)`,
           placeholder: 'myalias',
           validate: (v) => {
             const t = v.trim();
@@ -180,7 +182,7 @@ async function cmdRegister(): Promise<void> {
   };
 
   const identity: RegisterPayload['identity'] = {
-    names: [agentName],
+    names: { first: agentName },
     agent_type: agentType,
     ...(description && { description }),
   };
@@ -328,7 +330,8 @@ async function cmdRegister(): Promise<void> {
       `  Entity ID : ${result.entity_id}\n` +
       (result.alias ? `  Alias     : @${result.alias}\n` : '') +
       `\n  Keypair saved to: ${outFile}\n` +
-      `  Keep the private key secret. Back it up securely.\n\n` +
+      `\x1b[1;91m  ❗❗ DO NOT CLOSE THIS TERMINAL BEFORE SAVING YOUR PRIVATE KEY ❗❗\n` +
+      `     THERE IS NO PASSWORD RESET. LOSS = PERMANENT LOCKOUT.\x1b[0m\n\n` +
       `  Profile URL: https://aieos.org/${result.alias ?? result.entity_id}`,
     );
   } catch (err) {
@@ -374,14 +377,18 @@ async function cmdUpdate(): Promise<void> {
   }
 
   const currentIdentity = (current.identity ?? {}) as Record<string, unknown>;
-  const currentNames = Array.isArray(currentIdentity.names)
-    ? (currentIdentity.names as string[])
-    : [];
+  // Handle both old array format and new object format
+  const currentNamesRaw = currentIdentity.names;
+  const currentNamesObj = (
+    Array.isArray(currentNamesRaw)
+      ? { first: (currentNamesRaw as string[])[0] ?? '' }
+      : (currentNamesRaw as Record<string, string> | undefined) ?? {}
+  );
   const currentMeta = (current.metadata ?? {}) as Record<string, unknown>;
 
   const newNameRaw = await p.text({
-    message: 'Agent name',
-    initialValue: currentNames[0] ?? '',
+    message: 'Agent display name  (first name)',
+    initialValue: currentNamesObj.first ?? '',
     validate: (v) => (v.trim().length < 1 ? 'Name is required.' : undefined),
   });
   if (p.isCancel(newNameRaw)) return cancelled();
@@ -409,7 +416,7 @@ async function cmdUpdate(): Promise<void> {
     metadata: updatedMetadata,
     identity: {
       ...currentIdentity,
-      names: [newName],
+      names: { ...currentNamesObj, first: newName },
       ...(newDesc && { description: newDesc }),
     },
     ...(current.capabilities !== undefined ? { capabilities: current.capabilities as Record<string, unknown> } : {}),
@@ -552,7 +559,7 @@ async function previewAliasPrice(client: AieosClient, alias: string): Promise<Pa
     await client.register({
       standard: { protocol: 'AIEOS', version: SCHEMA_VERSION },
       metadata: { public_key: '0'.repeat(64), signature: '0'.repeat(128), alias },
-      identity: { names: ['_preview'] },
+      identity: { names: { first: '_preview' } },
     });
   } catch (err) {
     if (err instanceof AieosApiError && err.status === 402 && err.body.amount) {
