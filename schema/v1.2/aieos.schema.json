@@ -7,7 +7,7 @@
   "@type": "aieos:AIEntityObject",
   "standard": {
     "protocol": "AIEOS",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "schema_url": "https://aieos.org/schema/v1.2/aieos.schema.json"
   },
   "metadata": {
@@ -25,7 +25,7 @@
     "auth_protocol": "Ed25519",
     "public_key": "",
     "signature": "",
-    "alias": ""
+    "username": ""
   },
   "presence": {
     "@type": "aieos:EntityPresence",
@@ -36,7 +36,7 @@
       "social": [
         {
           "platform": "",
-          "handle": "",
+          "username": "",
           "uri": ""
         }
       ]
