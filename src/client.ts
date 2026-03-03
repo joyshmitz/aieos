@@ -12,18 +12,17 @@ export interface AgentNames {
 
 export interface RegisterPayload {
   standard: { protocol: string; version: string; schema_url?: string };
-  metadata: { public_key: string; signature: string; alias?: string };
+  metadata: { public_key: string; signature: string };
   identity: { names: AgentNames; [key: string]: unknown };
   capabilities?: Record<string, unknown>;
   endpoints?: Record<string, unknown>;
-  tx_id?: string;
-  tx_uri?: string;
+  name?: string;
   email?: string;
 }
 
 export interface RegisterResult {
   entity_id: string;
-  alias?: string;
+  username?: string;
   message: string;
 }
 
@@ -38,8 +37,7 @@ export interface UpdatePayload {
 export interface ApiError {
   error: string;
   message?: string;
-  // Payment required fields
-  alias?: string;
+  username?: string;
   amount?: string;
   wallet_address?: string;   // legacy
   contract_address?: string; // current
