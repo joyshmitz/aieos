@@ -16,13 +16,13 @@ export interface RegisterPayload {
   identity: { names: AgentNames; [key: string]: unknown };
   capabilities?: Record<string, unknown>;
   endpoints?: Record<string, unknown>;
-  name?: string;
+  name: string;
   email?: string;
 }
 
 export interface RegisterResult {
   entity_id: string;
-  username?: string;
+  username: string;
   message: string;
 }
 

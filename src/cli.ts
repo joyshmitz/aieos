@@ -100,6 +100,7 @@ async function cmdRegister(): Promise<void> {
     identity: {
       names: { first: agentName },
     },
+    name: agentName.toLowerCase(),
   };
 
   // Sign (only profile keys: standard, metadata, identity)
@@ -113,7 +114,6 @@ async function cmdRegister(): Promise<void> {
   try {
     const payload: RegisterPayload = {
       ...profile,
-      name: agentName.toLowerCase(),
       ...(email && { email }),
     };
     const result = await client.register(payload);
