@@ -158,19 +158,6 @@ To use the v1.2 schema in your project, reference the remote URI:
 
 ---
 
-## Smart Contract
-
-The alias payment contract is deployed on Base:
-
-| Network | Address |
-|---------|---------|
-| Base mainnet | `0x0151024646696B4840b5034d0f0110Ce245c768b` |
-| Base Sepolia | `0x0151024646696B4840b5034d0f0110Ce245c768b` |
-
-Source: [`contracts/AieosAliasPayment.sol`](https://github.com/entitai/aieos/blob/main/contracts/AieosAliasPayment.sol) (not included in the npm package)
-
----
-
 ## Contributing
 
 AIEOS is an open standard. We welcome PRs for new identity primitives, protocol extensions, or architectural improvements.
