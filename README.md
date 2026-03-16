@@ -20,7 +20,7 @@ Typical sequence: Agent A queries Agent B's identity, reads its available skills
 
 ## Core Structure
 
-- **Metadata:** Unique entity identification via UUID v4, human-readable Alias, and Ed25519 key pair for cryptographic signing and verification.
+- **Metadata:** Unique entity identification via UUID v4, human-readable username, and Ed25519 key pair for cryptographic signing and verification.
 - **Presence:** Network endpoints (IPv4/IPv6, webhooks), communication channels, and settlement wallets for autonomous value transfer.
 - **Capabilities & Skills:** A modular agency layer for defining the standardized tools and executable functions available to an entity, utilizing a descending priority scale (1-10) for autonomous skill discovery and task orchestration.
 
@@ -51,10 +51,12 @@ npx @entitai/aieos register
 ```
 
 The wizard will:
-1. Ask for your agent's name and type
-2. Generate an Ed25519 keypair (stays on your machine)
-3. Sign and submit your identity to the AIEOS registry
-4. Save your keypair to a local JSON file
+1. Ask for your agent's name (letters/numbers, up to 16 chars)
+2. Optionally ask for a recovery email
+3. Generate an Ed25519 keypair (stays on your machine)
+4. Sign and submit your identity to the AIEOS registry
+5. Auto-generate a username (e.g. `aria-7c40b7e2`)
+6. Save your keypair to a local JSON file
 
 ---
 
@@ -62,8 +64,9 @@ The wizard will:
 
 ```sh
 npx @entitai/aieos register              # Register a new agent (interactive wizard)
+npx @entitai/aieos claim                 # Claim a custom username (paid, on-chain USDC)
 npx @entitai/aieos update                # Update your agent profile (interactive)
-npx @entitai/aieos lookup <identifier>   # Look up an agent by entity_id, public key, or alias
+npx @entitai/aieos lookup <identifier>   # Look up an agent by entity_id, public key, or username
 npx @entitai/aieos verify <identifier>   # Fetch a profile and verify its Ed25519 signature
 npx @entitai/aieos keygen                # Generate a new Ed25519 keypair (prints JSON)
 ```
@@ -71,13 +74,41 @@ npx @entitai/aieos keygen                # Generate a new Ed25519 keypair (print
 If installed globally (`npm i -g @entitai/aieos`):
 ```sh
 aieos register
-aieos lookup id
+aieos claim
+aieos lookup <username>
+```
+
+### Claiming a Custom Username
+
+Registration is free and auto-generates a username. To claim a custom one:
+
+```sh
+npx @entitai/aieos claim
+```
+
+Pricing:
+| Length | Price |
+|--------|-------|
+| 1 char | 800 USDC |
+| 2 chars | 200 USDC |
+| 3 chars | 50 USDC |
+| 4+ chars | 5 USDC |
+| Premium names | 800 USDC |
+
+Payment is on-chain via USDC on [Base](https://base.org). The CLI handles the full flow: check availability, show price, approve USDC, call the smart contract, and submit the claim.
+
+**Affiliate referrals:**
+```sh
+npx @entitai/aieos claim --aff 0x1234...
+# or
+AIEOS_AFF=0x1234... npx @entitai/aieos claim
 ```
 
 ### Environment
 
 ```sh
 AIEOS_API_URL=https://api.aieos.org   # Override API base URL (for self-hosting)
+AIEOS_AFF=0x...                        # Default affiliate address for claims
 ```
 
 ---
@@ -93,19 +124,20 @@ const keypair = generateKeypair();
 
 // Build and sign a profile
 const profile = {
-  standard: { protocol: 'AIEOS', version: '1.2' },
+  standard: { protocol: 'AIEOS', version: '1.2.1' },
   metadata: { public_key: keypair.publicKey, signature: '' },
-  identity:  { names: ['MyAgent'], agent_type: 'AI Assistant' },
+  identity: { names: { first: 'MyAgent' } },
+  name: 'myagent',
 };
 profile.metadata.signature = signProfile(profile, keypair.privateKey);
 
 // Register via API
 const client = new AieosClient();
 const result = await client.register(profile);
-// { entity_id: '...', message: 'Agent registered successfully' }
+// { entity_id: '...', username: 'myagent-7c40b7e2', message: 'Agent registered successfully' }
 
 // Lookup
-const agentProfile = await client.lookup('id');
+const agentProfile = await client.lookup('myagent-7c40b7e2');
 
 // Verify signature
 const valid = verifyProfile(agentProfile);
@@ -123,6 +155,19 @@ const { generateKeypair, AieosClient } = require('@entitai/aieos');
 
 To use the v1.2 schema in your project, reference the remote URI:
 `https://aieos.org/schema/v1.2/aieos.schema.json`
+
+---
+
+## Smart Contract
+
+The alias payment contract is deployed on Base:
+
+| Network | Address |
+|---------|---------|
+| Base mainnet | `0x0151024646696B4840b5034d0f0110Ce245c768b` |
+| Base Sepolia | `0x0151024646696B4840b5034d0f0110Ce245c768b` |
+
+Source: [`contracts/AieosAliasPayment.sol`](https://github.com/entitai/aieos/blob/main/contracts/AieosAliasPayment.sol) (not included in the npm package)
 
 ---
 
